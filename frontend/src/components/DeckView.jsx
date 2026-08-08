@@ -1,15 +1,49 @@
-import { ChatCircleDots, Stack } from '@phosphor-icons/react'
+import { useState } from 'react'
+import { ChatCircleDots, ImageSquare, Stack } from '@phosphor-icons/react'
 import SlideCard from './SlideCard'
+
+function heroImageUrl(title, seed) {
+  const prompt = `${title}. Minimal modern presentation cover illustration, soft colors, clean`
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(
+    prompt
+  )}?width=1024&height=384&nologo=true&seed=${seed}`
+}
+
+function HeroImage({ title, seed }) {
+  const [status, setStatus] = useState('loading')
+  if (status === 'error') return null
+
+  return (
+    <div className="relative mb-5 h-48 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+      {status === 'loading' && (
+        <div className="absolute inset-0 flex animate-pulse items-center justify-center text-slate-300">
+          <ImageSquare size={32} />
+        </div>
+      )}
+      <img
+        src={heroImageUrl(title, seed)}
+        alt={title}
+        loading="lazy"
+        onLoad={() => setStatus('ready')}
+        onError={() => setStatus('error')}
+        className={`h-full w-full object-cover transition-opacity duration-500 ${
+          status === 'ready' ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+    </div>
+  )
+}
 
 export default function DeckView({ presentation }) {
   if (!presentation) return null
 
-  const { title, deck } = presentation
+  const { id, title, deck } = presentation
   const slides = deck?.slides ?? []
   const questions = deck?.audienceQuestions ?? []
 
   return (
     <section>
+      <HeroImage title={title} seed={id ?? 1} />
       <header className="mb-6">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
           {title}
