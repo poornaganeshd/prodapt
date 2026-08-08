@@ -53,10 +53,13 @@ export default function GenerateForm({
       <textarea
         id="idea"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          onChange(event.target.value)
+          if (file) onFileChange(null)
+        }}
         placeholder="e.g. A pitch for a smart water-bottle that tracks hydration and syncs to a fitness app."
         rows={6}
-        disabled={loading || !!file}
+        disabled={loading}
         className="w-full resize-y rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
       />
 
