@@ -1,0 +1,233 @@
+##TECHNICAL DOCUMENTATION
+AI Presentation Builder
+Technical Overview and System Documentation
+Item	Details
+Frontend	React, Vite, Tailwind CSS
+Backend	Java 21, Spring Boot
+Database	MySQL
+AI	Groq API with LLaMA model
+Document Processing	Apache PDFBox and Apache POI
+Main Purpose	Generate structured presentations from text or documents
+
+ 
+1. Introduction
+AI Presentation Builder is a web application that uses artificial intelligence to automatically create the structure and content of a presentation. A user can either enter a topic or upload a document. The system processes the input and generates a presentation containing slides, bullet points, speaker notes, visual suggestions and possible audience questions.
+The project is built as a full-stack application. React handles the user interface, Spring Boot handles the backend logic, MySQL stores generated presentations, and the Groq API provides the language model.
+
+
+2. Problem Statement
+Creating a presentation manually takes time because the user has to organize information, decide what goes on each slide, write concise points and prepare speaker notes. The project aims to automate these repetitive tasks while still giving the user a structured presentation that can be reviewed and modified.
+
+
+3. Objectives
+•	Generate presentations from a topic or text.
+•	Generate presentations from uploaded PDF, DOCX, TXT and Markdown files.
+•	Use an LLM to organize information into meaningful slides.
+•	Generate speaker notes and visual suggestions.
+•	Store generated presentations for later viewing.
+•	Provide a simple web interface for generation and history.
+
+
+4. System Architecture
+The application follows a simple client-server architecture. The React frontend communicates with the Spring Boot backend through REST APIs. The backend communicates with the AI service and database.
+Component	Technology	Role
+Frontend	React + Vite	User interface and presentation display
+Backend	Spring Boot	API, business logic and processing
+AI Service	Groq + LLaMA	Generates presentation content
+Database	MySQL	Stores generated presentations
+Document Parser	PDFBox + Apache POI	Extracts text from uploaded files
+
+4.1 Basic Architecture Flow
+User → React Frontend → Spring Boot Backend → Groq AI → Generated JSON → MySQL → React Frontend
+For document input, the flow becomes: User → React → Spring Boot → Document Text Extraction → Groq AI → Generated Presentation → MySQL → React.
+
+
+5. End-to-End Workflow
+1.	The user enters a topic or selects a document.
+2.	The React frontend sends the information to the backend.
+3.	The backend validates the input.
+4.	If a document is uploaded, its text is extracted.
+5.	The extracted text or user topic is sent to the Groq API.
+6.	The LLaMA model generates structured presentation content.
+7.	The backend checks and converts the response into application objects.
+8.	The presentation is saved in MySQL.
+9.	The backend sends the result to React.
+10.	React displays the generated presentation.
+
+
+6. Frontend
+The frontend is responsible for everything the user sees and interacts with. It is built using React and Vite, with Tailwind CSS used for styling.
+
+6.1 Main Frontend Components
+Component	Purpose
+App.jsx	Controls the main application and overall state
+GenerateForm.jsx	Accepts text and document uploads
+DeckView.jsx	Displays the generated presentation
+SlideCard.jsx	Displays an individual slide
+PresentationList.jsx	Displays previously generated presentations
+Spinner.jsx	Shows loading status
+api.js	Handles communication with the backend
+
+6.2 Frontend State
+React state is used to keep track of the user's input, selected file, loading status, errors, current presentation and presentation history. useEffect is used to load previous presentations when the application starts.
+
+
+7. Backend
+The backend is developed using Java 21 and Spring Boot. It acts as the central part of the application. It receives requests from React, processes the input, communicates with the AI service, stores the result and sends a response back to the frontend.
+
+7.1 Backend Layers
+Layer	Purpose
+Controller	Receives HTTP requests and returns responses
+Service	Contains the main application logic
+Repository	Communicates with MySQL
+DTO	Defines the structure of request and response data
+Exception	Handles application errors
+Configuration	Handles settings such as CORS
+
+
+8. AI / LLM Integration
+The project uses the Groq API to access a LLaMA language model. The backend sends the user's topic or document text to the model along with instructions describing how the presentation should be generated.
+
+8.1 Why Groq?
+•	Provides access to high-performance LLM inference.
+•	Offers an API that can be called from the backend.
+•	Allows the model to be changed through configuration.
+•	Suitable for applications where response speed is important.
+
+8.2 Why LLaMA?
+LLaMA is used as the language model responsible for understanding the user's topic and generating the presentation content. The model is not responsible for the web application, database or file processing; it only performs the language-generation part.
+
+8.3 Prompt Engineering
+The backend sends a system prompt that tells the model exactly what to generate. The prompt asks for a fixed JSON structure instead of normal paragraphs. This makes the AI response easier for the Java backend and React frontend to understand.
+The generated presentation contains:
+•	Presentation title
+•	Five to eight slides
+•	Slide headings
+•	Three to five bullet points per slide
+•	Speaker notes
+•	Visual recommendations
+•	Likely audience questions
+
+
+9. Document Processing
+The application supports four document types. The backend extracts text before sending it to the AI model.
+File Type	Technology Used	Purpose
+PDF	Apache PDFBox	Extracts text from PDF files
+DOCX	Apache POI	Extracts text from Word documents
+TXT	Java UTF-8	Reads plain text
+MD	Java UTF-8	Reads Markdown text
+
+The extracted text is checked before generation. The current system limits the extracted content to 20,000 characters to avoid excessively large requests to the LLM.
+
+
+10. REST API
+The frontend communicates with the backend through four main endpoints.
+Method	Endpoint	Purpose
+POST	/api/presentations/generate	Generate a presentation from text
+POST	/api/presentations/generate/upload	Generate a presentation from a file
+GET	/api/presentations	Get presentation history
+GET	/api/presentations/{id}	Get one saved presentation
+
+11. Error Handling
+The backend has a global exception handler so that errors are returned in a consistent format. Common cases include:
+Problem	Status
+Empty or invalid text	400 Bad Request
+Unsupported file	400 Bad Request
+File too large	400 Bad Request
+Presentation not found	404 Not Found
+AI/Groq failure	502 Bad Gateway
+Unexpected server error	500 Internal Server Error
+
+12. Security
+The Groq API key is stored on the backend and is loaded through environment configuration. It is not placed inside the React frontend. This prevents users from directly seeing the secret through frontend source code.
+Important security considerations for a production version include:
+•	Add user authentication.
+•	Restrict access to presentations by user.
+•	Use a secure secret-management system.
+•	Add rate limiting.
+•	Validate uploaded files more strictly.
+•	Scan uploaded files for malicious content.
+•	Add protection against prompt injection in uploaded documents.
+
+
+13. Configuration
+The application uses environment variables so that sensitive information and deployment-specific settings do not need to be hard-coded.
+Configuration	Purpose
+GROQ_API_KEY	Groq authentication key
+GROQ_MODEL	LLM model to use
+GROQ_BASE_URL	Groq API endpoint
+DB_URL	MySQL connection URL
+DB_USERNAME	Database username
+DB_PASSWORD	Database password
+
+14. Running the Project
+
+14.1 Start Backend
+cd backend
+./mvnw spring-boot:run
+The backend runs on port 8080 by default.
+
+14.2 Start Frontend
+cd frontend
+npm install
+npm run dev
+The frontend runs through the Vite development server, normally on port 5173.
+
+
+15. Current Limitations
+•	The application does not currently export a PowerPoint file.
+•	The generated presentation is displayed as a web-based deck.
+•	AI-generated information is not independently fact-checked.
+•	There is no authentication.
+•	There is no multi-user presentation ownership.
+•	Automated test coverage is currently limited.
+
+
+16. Future Enhancements
+•	Add PowerPoint (.pptx) generation.
+•	Add presentation templates and different slide layouts.
+•	Add user login and presentation ownership.
+•	Add source citations for generated information.
+•	Add RAG for large documents.
+•	Add automatic quality scoring for generated presentations.
+•	Add audience-specific presentation generation.
+•	Add a second AI validation step for factual and logical consistency.
+
+17. Technical Novelty Ideas
+The current project can be made more technically distinctive through the following features:
+Idea	Description
+Audience-Aware Generation	Generate different versions for students, engineers, executives or general audiences.
+Source-to-Slide Mapping	Show which parts of the uploaded document contributed to each slide.
+Automatic Slide Types	Choose layouts such as timeline, comparison, process or architecture based on content.
+Quality Score	Score the presentation for coverage, repetition, readability and flow.
+Hallucination Detection	Flag claims that are not supported by the uploaded source.
+
+18. Project File Structure
+prodapt/
+├── backend/
+│   ├── pom.xml
+│   └── src/main/java/com/prodapt/presentation/
+│       ├── config/
+│       ├── domain/
+│       ├── dto/
+│       ├── exception/
+│       ├── repository/
+│       ├── service/
+│       └── web/
+│
+├── frontend/
+│   ├── package.json
+│   └── src/
+│       ├── components/
+│       ├── App.jsx
+│       ├── api.js
+│       ├── main.jsx
+│       └── index.css
+│
+├── docker-compose.yml
+└── README.md
+
+
+19. Conclusion
+AI Presentation Builder combines a React frontend, Spring Boot backend, MySQL database and LLM-based generation into one automated presentation workflow. The frontend provides the user experience, the backend controls the application logic, the document-processing layer extracts source content, and the Groq LLaMA model generates the presentation structure.
+The use of structured JSON is central to the design because it creates a clear connection between probabilistic AI output and deterministic application components. The current prototype provides a solid foundation for future features such as PowerPoint export, source traceability, audience-aware generation and automated quality checking.
