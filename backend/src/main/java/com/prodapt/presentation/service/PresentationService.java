@@ -15,20 +15,20 @@ import tools.jackson.databind.ObjectMapper;
 public class PresentationService {
 
     private final PresentationRepository repository;
-    private final ClaudeClient claudeClient;
+    private final GroqClient groqClient;
     private final ObjectMapper objectMapper;
 
     public PresentationService(
             PresentationRepository repository,
-            ClaudeClient claudeClient,
+            GroqClient groqClient,
             ObjectMapper objectMapper) {
         this.repository = repository;
-        this.claudeClient = claudeClient;
+        this.groqClient = groqClient;
         this.objectMapper = objectMapper;
     }
 
     public PresentationResponse generate(String inputText) {
-        GeneratedDeck deck = claudeClient.generate(inputText);
+        GeneratedDeck deck = groqClient.generate(inputText);
 
         String generatedJson;
         try {

@@ -19,9 +19,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
-public class ClaudeClient {
+public class GroqClient {
 
-    private static final Logger log = LoggerFactory.getLogger(ClaudeClient.class);
+    private static final Logger log = LoggerFactory.getLogger(GroqClient.class);
 
     private static final String SYSTEM_PROMPT = """
             You are a presentation-building assistant. Given the user's idea, topic, or document text,
@@ -60,21 +60,18 @@ public class ClaudeClient {
     private final String apiKey;
     private final String model;
     private final String baseUrl;
-    private final String anthropicVersion;
     private final int maxTokens;
 
-    public ClaudeClient(
+    public GroqClient(
             ObjectMapper objectMapper,
-            @Value("${claude.api-key}") String apiKey,
-            @Value("${claude.model}") String model,
-            @Value("${claude.base-url}") String baseUrl,
-            @Value("${claude.version}") String anthropicVersion,
-            @Value("${claude.max-tokens}") int maxTokens) {
+            @Value("${groq.api-key}") String apiKey,
+            @Value("${groq.model}") String model,
+            @Value("${groq.base-url}") String baseUrl,
+            @Value("${groq.max-tokens}") int maxTokens) {
         this.objectMapper = objectMapper;
         this.apiKey = apiKey;
         this.model = model;
         this.baseUrl = baseUrl;
-        this.anthropicVersion = anthropicVersion;
         this.maxTokens = maxTokens;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
@@ -84,7 +81,7 @@ public class ClaudeClient {
     public GeneratedDeck generate(String userText) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new GenerationException(
-                    "Claude API key is not configured. Set CLAUDE_API_KEY in the backend .env file.");
+                    "Groq API key is not configured. Set GROQ_API_KEY in the backend .env file.");
         }
 
         String requestBody = buildRequestBody(userText);
@@ -94,25 +91,24 @@ public class ClaudeClient {
                     .uri(URI.create(baseUrl))
                     .timeout(Duration.ofSeconds(90))
                     .header("content-type", "application/json")
-                    .header("x-api-key", apiKey)
-                    .header("anthropic-version", anthropicVersion)
+                    .header("authorization", "Bearer " + apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
             response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (java.io.IOException e) {
-            throw new GenerationException("Could not reach the Claude API. Check your network and try again.", e);
+            throw new GenerationException("Could not reach the Groq API. Check your network and try again.", e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new GenerationException("Generation was interrupted. Please try again.", e);
         }
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            log.warn("Claude API returned status {}: {}", response.statusCode(), truncate(response.body()));
+            log.warn("Groq API returned status {}: {}", response.statusCode(), truncate(response.body()));
             throw new GenerationException(
-                    "The Claude API returned an error (status " + response.statusCode() + "). Please try again.");
+                    "The Groq API returned an error (status " + response.statusCode() + "). Please try again.");
         }
 
-        String modelText = extractText(response.body());
+        String modelText = extractContent(response.body());
         return parseAndValidate(modelText);
     }
 
@@ -120,39 +116,36 @@ public class ClaudeClient {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("model", model);
         root.put("max_tokens", maxTokens);
-        root.put("system", SYSTEM_PROMPT);
+        root.put("temperature", 0.4);
+        root.put("response_format", Map.of("type", "json_object"));
         root.put("messages", List.of(
-                Map.of("role", "user", "content", userText),
-                // Prefill the assistant turn with "{" to force a JSON-only response.
-                Map.of("role", "assistant", "content", "{")
+                Map.of("role", "system", "content", SYSTEM_PROMPT),
+                Map.of("role", "user", "content", userText)
         ));
 
         try {
             return objectMapper.writeValueAsString(root);
         } catch (Exception e) {
-            throw new GenerationException("Failed to build the request to Claude.", e);
+            throw new GenerationException("Failed to build the request to Groq.", e);
         }
     }
 
-    private String extractText(String responseBody) {
+    private String extractContent(String responseBody) {
         try {
             JsonNode root = objectMapper.readTree(responseBody);
-            JsonNode content = root.path("content");
-            if (!content.isArray() || content.isEmpty()) {
-                throw new GenerationException("Claude returned an empty response. Please try again.");
+            JsonNode choices = root.path("choices");
+            if (!choices.isArray() || choices.isEmpty()) {
+                throw new GenerationException("Groq returned an empty response. Please try again.");
             }
-            StringBuilder sb = new StringBuilder();
-            for (JsonNode block : content) {
-                if ("text".equals(block.path("type").asText())) {
-                    sb.append(block.path("text").asText());
-                }
+            String content = choices.get(0).path("message").path("content").asString();
+            if (content == null || content.isBlank()) {
+                throw new GenerationException("Groq returned no content. Please try again.");
             }
-            // Re-attach the prefilled "{" that started the assistant turn.
-            return "{" + sb;
+            return content;
         } catch (GenerationException e) {
             throw e;
         } catch (Exception e) {
-            throw new GenerationException("Could not read Claude's response.", e);
+            throw new GenerationException("Could not read Groq's response.", e);
         }
     }
 
@@ -162,8 +155,8 @@ public class ClaudeClient {
         try {
             deck = objectMapper.readValue(json, GeneratedDeck.class);
         } catch (Exception e) {
-            log.warn("Malformed JSON from Claude: {}", truncate(modelText));
-            throw new GenerationException("Claude returned malformed output. Please try again.", e);
+            log.warn("Malformed JSON from Groq: {}", truncate(modelText));
+            throw new GenerationException("The model returned malformed output. Please try again.", e);
         }
 
         if (deck.title() == null || deck.title().isBlank()) {
