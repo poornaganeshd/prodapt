@@ -1,0 +1,15 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dsznajder.es7-react-js-snippets",
+    "bradlc.vscode-tailwindcss",
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-spring-boot",
+    "vscjava.vscode-spring-initializr",
+    "mtxr.sqltools",
+    "editorconfig.editorconfig",
+    "eamodio.gitlens",
+    "github.vscode-pull-request-github"
+  ]
+}
