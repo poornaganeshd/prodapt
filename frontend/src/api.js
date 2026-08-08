@@ -24,6 +24,16 @@ export async function generatePresentation(text) {
   return handle(response)
 }
 
+export async function generateFromFile(file) {
+  const form = new FormData()
+  form.append('file', file)
+  const response = await fetch(`${BASE}/generate/upload`, {
+    method: 'POST',
+    body: form,
+  })
+  return handle(response)
+}
+
 export async function listPresentations() {
   const response = await fetch(BASE)
   return handle(response)

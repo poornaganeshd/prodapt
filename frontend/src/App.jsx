@@ -6,12 +6,14 @@ import PresentationList from './components/PresentationList'
 import Spinner from './components/Spinner'
 import {
   generatePresentation,
+  generateFromFile,
   listPresentations,
   getPresentation,
 } from './api'
 
 export default function App() {
   const [text, setText] = useState('')
+  const [file, setFile] = useState(null)
   const [generating, setGenerating] = useState(false)
   const [fetchingDeck, setFetchingDeck] = useState(false)
   const [error, setError] = useState(null)
@@ -35,8 +37,11 @@ export default function App() {
     setError(null)
     setGenerating(true)
     try {
-      const result = await generatePresentation(text)
+      const result = file
+        ? await generateFromFile(file)
+        : await generatePresentation(text)
       setCurrent(result)
+      setFile(null)
       await refreshList()
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e) {
@@ -89,6 +94,8 @@ export default function App() {
             onSubmit={handleGenerate}
             loading={generating}
             error={error}
+            file={file}
+            onFileChange={setFile}
           />
 
           {showSkeleton ? (
