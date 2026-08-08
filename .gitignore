@@ -18,9 +18,6 @@ target/
 .env.*.local
 application-local.properties
 
-# --- Tooling ---
-.claude/
-
 # --- IDE ---
 .vscode/*
 !.vscode/settings.json
