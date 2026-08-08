@@ -1,133 +1,190 @@
-import { useRef } from 'react'
+import { useRef } from "react";
 import {
+  ArrowRight,
   FileText,
   Sparkle,
-  Warning,
   UploadSimple,
+  Warning,
   X,
-} from '@phosphor-icons/react'
-import Spinner from './Spinner'
+} from "@phosphor-icons/react";
 
-const ACCEPT = '.pdf,.docx,.txt,.md'
+import Spinner from "./Spinner";
+
+const ACCEPT = ".pdf,.docx,.txt,.md";
 
 function formatSize(bytes) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function GenerateForm({
   value,
   onChange,
+  mode,
+  onModeChange,
+  file,
+  onFileChange,
   onSubmit,
   loading,
   error,
-  file,
-  onFileChange,
 }) {
-  const inputRef = useRef(null)
-  const noText = value.trim().length === 0
-  const canSubmit = !!file || !noText
+  const inputRef = useRef(null);
+  const empty = mode === "file" ? !file : value.trim().length === 0;
 
   function handleSubmit(event) {
-    event.preventDefault()
-    if (!canSubmit || loading) return
-    onSubmit()
+    event.preventDefault();
+
+    if (empty || loading) return;
+
+    onSubmit();
   }
 
   function handleFileSelected(event) {
-    const selected = event.target.files?.[0]
-    if (selected) onFileChange(selected)
-    event.target.value = ''
+    const selected = event.target.files?.[0];
+
+    if (selected) onFileChange(selected);
+
+    event.target.value = "";
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <label
-        htmlFor="idea"
-        className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700"
-      >
-        <FileText size={18} className="text-slate-400" />
-        Your idea or topic
-      </label>
-      <textarea
-        id="idea"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="e.g. A pitch for a smart water-bottle that tracks hydration and syncs to a fitness app."
-        rows={6}
-        disabled={loading || !!file}
-        className="w-full resize-y rounded-lg border border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
-      />
-
-      <div className="my-4 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" />
-        or
-        <span className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPT}
-        onChange={handleFileSelected}
-        className="hidden"
-      />
-
-      {file ? (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2.5">
-          <span className="flex min-w-0 items-center gap-2 text-sm text-indigo-800">
-            <FileText size={18} className="shrink-0 text-indigo-500" />
-            <span className="truncate font-medium">{file.name}</span>
-            <span className="shrink-0 text-indigo-400">{formatSize(file.size)}</span>
-          </span>
+    <form onSubmit={handleSubmit}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="inline-flex items-center gap-1 rounded-full border border-[#dedbd3] bg-white p-1">
           <button
             type="button"
-            onClick={() => onFileChange(null)}
+            onClick={() => onModeChange("text")}
             disabled={loading}
-            className="shrink-0 rounded p-1 text-indigo-400 hover:bg-indigo-100 hover:text-indigo-600 disabled:opacity-50"
-            aria-label="Remove file"
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed ${
+              mode === "text"
+                ? "bg-[#242321] text-white"
+                : "text-[#77736b] hover:text-[#242321]"
+            }`}
           >
-            <X size={16} weight="bold" />
+            Paste text
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onModeChange("file")}
+            disabled={loading}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed ${
+              mode === "file"
+                ? "bg-[#242321] text-white"
+                : "text-[#77736b] hover:text-[#242321]"
+            }`}
+          >
+            Upload document
           </button>
         </div>
+
+        {mode === "text" && (
+          <span className="text-xs text-[#aaa69d]">
+            {value.length} characters
+          </span>
+        )}
+      </div>
+
+      {mode === "text" ? (
+        <div className="relative">
+          <textarea
+            id="idea"
+            value={value}
+            onChange={(event) => onChange(event.target.value)}
+            placeholder="e.g. A pitch for a smart water bottle that tracks hydration and syncs to a fitness app..."
+            rows={7}
+            disabled={loading}
+            className="w-full resize-y rounded-2xl border border-[#dedbd3] bg-white px-5 py-4 text-[15px] leading-7 text-[#2d2b28] outline-none transition placeholder:text-[#aaa69d] focus:border-[#9a82e8] focus:ring-4 focus:ring-[#eee9ff] disabled:bg-[#f4f2ed] disabled:opacity-60"
+          />
+        </div>
       ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 disabled:opacity-50"
-        >
-          <UploadSimple size={18} />
-          Upload a document
-          <span className="text-slate-400">PDF, DOCX, TXT</span>
-        </button>
+        <div>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={ACCEPT}
+            onChange={handleFileSelected}
+            className="hidden"
+          />
+
+          {file ? (
+            <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#dedbd3] bg-white px-5 py-4">
+              <span className="flex min-w-0 items-center gap-2 text-sm text-[#2d2b28]">
+                <FileText size={18} className="shrink-0 text-[#7658df]" />
+                <span className="truncate font-medium">{file.name}</span>
+                <span className="shrink-0 text-xs text-[#aaa69d]">
+                  {formatSize(file.size)}
+                </span>
+              </span>
+
+              <button
+                type="button"
+                onClick={() => onFileChange(null)}
+                disabled={loading}
+                className="shrink-0 rounded-full p-1.5 text-[#aaa69d] transition hover:bg-[#f4f2ed] hover:text-[#242321] disabled:opacity-50"
+                aria-label="Remove file"
+              >
+                <X size={15} weight="bold" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={loading}
+              className="flex w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#dedbd3] bg-white px-5 py-10 text-center transition hover:border-[#9a82e8] hover:bg-[#fcfbf8] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eee9ff] text-[#7658df]">
+                <UploadSimple size={20} />
+              </div>
+
+              <div className="text-sm font-semibold text-[#44413c]">
+                Click to upload a document
+              </div>
+
+              <div className="text-xs text-[#aaa69d]">
+                PDF, DOCX, TXT or MD
+              </div>
+            </button>
+          )}
+        </div>
       )}
 
+      <div className="mt-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs text-[#aaa69d]">
+          <Sparkle size={13} weight="fill" className="text-[#7658df]" />
+          {mode === "text"
+            ? "AI will structure your idea into a story"
+            : "AI will read your document and build a story from it"}
+        </div>
+      </div>
+
       {error && (
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="mt-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           <Warning size={18} className="mt-0.5 shrink-0" />
+
           <span>{error}</span>
         </div>
       )}
 
       <button
         type="submit"
-        disabled={!canSubmit || loading}
-        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 disabled:cursor-not-allowed disabled:bg-slate-300"
+        disabled={empty || loading}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#242321] px-5 py-3.5 text-sm font-semibold text-white shadow-[0_8px_25px_rgba(36,35,33,0.15)] transition hover:-translate-y-0.5 hover:bg-[#35332f] disabled:cursor-not-allowed disabled:bg-[#d1cec6] disabled:text-[#96928a] disabled:shadow-none"
       >
         {loading ? (
           <>
             <Spinner size={18} />
-            Generating…
+            Creating...
           </>
         ) : (
           <>
-            <Sparkle size={18} weight="fill" />
-            {file ? 'Generate from Document' : 'Generate Presentation'}
+            Continue
+            <ArrowRight size={17} />
           </>
         )}
       </button>
     </form>
-  )
+  );
 }
