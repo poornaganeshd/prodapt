@@ -7,14 +7,14 @@ Turn an idea or block of text into a structured presentation — slide headings,
 - Frontend: React (Vite) + Tailwind CSS
 - Backend: Spring Boot (Java 21) REST API
 - Database: MySQL
-- Model: Claude (Anthropic) — called server-side only
+- Model: Groq (LLaMA) — called server-side only
 
 ## Prerequisites
 
 - Java 21
 - Node.js 18+
 - Docker (for MySQL) or a local MySQL 8 instance
-- An Anthropic API key
+- A Groq API key
 
 ## Setup
 
@@ -35,7 +35,7 @@ cd backend
 cp .env.example .env
 ```
 
-Edit `backend/.env` and set `CLAUDE_API_KEY`. Then run:
+Edit `backend/.env` and set `GROQ_API_KEY`. Then run:
 
 ```bash
 ./mvnw spring-boot:run
