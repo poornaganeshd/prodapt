@@ -9,6 +9,7 @@ import com.prodapt.presentation.exception.NotFoundException;
 import com.prodapt.presentation.repository.PresentationRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
 @Service
@@ -16,15 +17,23 @@ public class PresentationService {
 
     private final PresentationRepository repository;
     private final GroqClient groqClient;
+    private final DocumentTextExtractor documentTextExtractor;
     private final ObjectMapper objectMapper;
 
     public PresentationService(
             PresentationRepository repository,
             GroqClient groqClient,
+            DocumentTextExtractor documentTextExtractor,
             ObjectMapper objectMapper) {
         this.repository = repository;
         this.groqClient = groqClient;
+        this.documentTextExtractor = documentTextExtractor;
         this.objectMapper = objectMapper;
+    }
+
+    public PresentationResponse generateFromDocument(MultipartFile file) {
+        String text = documentTextExtractor.extract(file);
+        return generate(text);
     }
 
     public PresentationResponse generate(String inputText) {

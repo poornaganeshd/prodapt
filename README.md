@@ -57,6 +57,7 @@ Open `http://localhost:5173`. The dev server proxies `/api` to the backend.
 
 | Method | Endpoint                        | Description                    |
 | ------ | ------------------------------- | ------------------------------ |
-| POST   | `/api/presentations/generate`   | Generate a deck from text      |
+| POST   | `/api/presentations/generate`        | Generate a deck from text          |
+| POST   | `/api/presentations/generate/upload` | Generate a deck from a document    |
 | GET    | `/api/presentations`            | List past presentations        |
 | GET    | `/api/presentations/{id}`       | Get one presentation by id     |
